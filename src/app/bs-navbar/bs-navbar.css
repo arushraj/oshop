@@ -1,0 +1,19 @@
+.navbar-collapse {
+  justify-content: space-between;
+}
+
+.navbar-collapse .form-inline {
+  display: flex;
+}
+
+.navbar-collapse .form-inline .form-control {
+  margin-right: 0.5rem;
+}
+
+.navbar {
+  --bs-navbar-padding-x: 0.5rem;
+}
+
+.dropdown-toggle {
+  cursor: pointer;
+}
