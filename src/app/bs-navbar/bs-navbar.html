@@ -1,29 +1,35 @@
-<nav class="navbar navbar-expand-md navbar-light bg-light fixed-top">
-  <a class="navbar-brand" routerLink="/">Organic Shop</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
-    aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
+<nav class="navbar navbar-expand-lg bg-body-tertiary rounded">
+  <div class="container-fluid">
+    <a class="navbar-brand" routerLink="/">Organic Shop</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+      aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-  <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-    <ul class="navbar-nav mr-auto">
-      <li class="nav-item">
-        <a class="nav-link" routerLink="/shopping-cart">Shopping Cart</a>
-      </li>
-      <li class="nav-item dropdown" [class.show]="isDropdownOpen">
-        <a class="nav-link dropdown-toggle" id="dropdown01" data-toggle="dropdown" aria-haspopup="true"
-          aria-expanded="false" (click)="toggleDropdown()" (mouseleave)="toggleDropdown()">Usersname</a>
-        <div class="dropdown-menu" (mouseenter)="toggleDropdown()" (mouseleave)="toggleDropdown()" [class.show]="isDropdownOpen" aria-labelledby="dropdown01">
-          <a class="dropdown-item" routerLink="/my-orders">My Orders</a>
-          <a class="dropdown-item" routerLink="/admin/orders">Manage Orders</a>
-          <a class="dropdown-item" routerLink="/admin/products">Manage Products</a>
-          <a class="dropdown-item">Log Out</a>
-        </div>
-      </li>
-    </ul>
-    <!-- <form class="form-inline my-3 my-lg-0">
-      <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
-      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-    </form> -->
+    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/shopping-cart">Shopping Cart</a>
+        </li>
+        <ng-template #anonymousUser>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/login">Login</a>
+          </li>
+        </ng-template>
+        <li class="nav-item dropdown" *ngIf="appUser as user; else anonymousUser" [class.show]="isDropdownOpen">
+          <a class="nav-link dropdown-toggle" id="dropdown01" data-toggle="dropdown" aria-haspopup="true"
+            aria-expanded="false" (click)="toggleDropdown()" (mouseleave)="toggleDropdown()">{{user.displayName}}</a>
+          <div class="dropdown-menu" (mouseenter)="toggleDropdown()" (mouseleave)="toggleDropdown()"
+            [class.show]="isDropdownOpen" aria-labelledby="dropdown01" *ngIf="isDropdownOpen">
+            <a class="dropdown-item" routerLink="/my-orders">My Orders</a>
+            <ng-container *ngIf="user.isAdmin">
+              <a class="dropdown-item" routerLink="/admin/orders">Manage Orders</a>
+              <a class="dropdown-item" routerLink="/admin/products">Manage Products</a>
+            </ng-container>
+            <a class="dropdown-item" (click)="logout()">Log Out</a>
+          </div>
+        </li>
+      </ul>
+    </div>
   </div>
 </nav>

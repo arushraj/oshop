@@ -1,37 +1,4 @@
 import {
-  EnvironmentInjector,
-  Inject,
-  Injectable,
-  InjectionToken,
-  Injector,
-  NgModule,
-  NgZone,
-  Observable,
-  Optional,
-  PLATFORM_ID,
-  PendingTasks,
-  VERSION,
-  Version,
-  assertInInjectionContext,
-  asyncScheduler,
-  concatMap,
-  distinct,
-  from,
-  inject,
-  isDevMode,
-  makeEnvironmentProviders,
-  observeOn,
-  queueScheduler,
-  runInInjectionContext,
-  setClassMetadata,
-  subscribeOn,
-  timer,
-  ɵɵdefineInjectable,
-  ɵɵdefineInjector,
-  ɵɵdefineNgModule,
-  ɵɵinject
-} from "./chunk-46UYDANU.js";
-import {
   __async,
   __spreadProps,
   __spreadValues
@@ -41,6 +8,28 @@ import {
 var getDefaultsFromPostinstall = () => void 0;
 
 // node_modules/@firebase/util/dist/index.esm2017.js
+var CONSTANTS = {
+  /**
+   * @define {boolean} Whether this is the client Node.js SDK.
+   */
+  NODE_CLIENT: false,
+  /**
+   * @define {boolean} Whether this is the Admin Node.js SDK.
+   */
+  NODE_ADMIN: false,
+  /**
+   * Firebase SDK Version
+   */
+  SDK_VERSION: "${JSCORE_VERSION}"
+};
+var assert = function(assertion, message) {
+  if (!assertion) {
+    throw assertionError(message);
+  }
+};
+var assertionError = function(message) {
+  return new Error("Firebase Database (" + CONSTANTS.SDK_VERSION + ") INTERNAL ASSERT FAILED: " + message);
+};
 var stringToByteArray$1 = function(str) {
   const out = [];
   let p = 0;
@@ -289,6 +278,39 @@ var base64Decode = function(str) {
   }
   return null;
 };
+function deepCopy(value) {
+  return deepExtend(void 0, value);
+}
+function deepExtend(target, source) {
+  if (!(source instanceof Object)) {
+    return source;
+  }
+  switch (source.constructor) {
+    case Date:
+      const dateValue = source;
+      return new Date(dateValue.getTime());
+    case Object:
+      if (target === void 0) {
+        target = {};
+      }
+      break;
+    case Array:
+      target = [];
+      break;
+    default:
+      return source;
+  }
+  for (const prop in source) {
+    if (!source.hasOwnProperty(prop) || !isValidKey(prop)) {
+      continue;
+    }
+    target[prop] = deepExtend(target[prop], source[prop]);
+  }
+  return target;
+}
+function isValidKey(key) {
+  return key !== "__proto__";
+}
 function getGlobal() {
   if (typeof self !== "undefined") {
     return self;
@@ -336,13 +358,29 @@ var getDefaultEmulatorHost = (productName) => {
   var _a, _b;
   return (_b = (_a = getDefaults()) === null || _a === void 0 ? void 0 : _a.emulatorHosts) === null || _b === void 0 ? void 0 : _b[productName];
 };
+var getDefaultEmulatorHostnameAndPort = (productName) => {
+  const host = getDefaultEmulatorHost(productName);
+  if (!host) {
+    return void 0;
+  }
+  const separatorIndex = host.lastIndexOf(":");
+  if (separatorIndex <= 0 || separatorIndex + 1 === host.length) {
+    throw new Error(`Invalid host ${host} with no separate hostname and port!`);
+  }
+  const port = parseInt(host.substring(separatorIndex + 1), 10);
+  if (host[0] === "[") {
+    return [host.substring(1, separatorIndex - 1), port];
+  } else {
+    return [host.substring(0, separatorIndex), port];
+  }
+};
 var getDefaultAppConfig = () => {
   var _a;
   return (_a = getDefaults()) === null || _a === void 0 ? void 0 : _a.config;
 };
-var getExperimentalSetting = (name3) => {
+var getExperimentalSetting = (name2) => {
   var _a;
-  return (_a = getDefaults()) === null || _a === void 0 ? void 0 : _a[`_${name3}`];
+  return (_a = getDefaults()) === null || _a === void 0 ? void 0 : _a[`_${name2}`];
 };
 var Deferred = class {
   constructor() {
@@ -390,6 +428,41 @@ function pingServer(endpoint) {
     return result.ok;
   });
 }
+function createMockUserToken(token, projectId) {
+  if (token.uid) {
+    throw new Error('The "uid" field is no longer supported by mockUserToken. Please use "sub" instead for Firebase Auth User ID.');
+  }
+  const header = {
+    alg: "none",
+    type: "JWT"
+  };
+  const project = projectId || "demo-project";
+  const iat = token.iat || 0;
+  const sub = token.sub || token.user_id;
+  if (!sub) {
+    throw new Error("mockUserToken must contain 'sub' or 'user_id' field!");
+  }
+  const payload = Object.assign({
+    // Set all required fields to decent defaults
+    iss: `https://securetoken.google.com/${project}`,
+    aud: project,
+    iat,
+    exp: iat + 3600,
+    auth_time: iat,
+    sub,
+    user_id: sub,
+    firebase: {
+      sign_in_provider: "custom",
+      identities: {}
+    }
+  }, token);
+  const signature = "";
+  return [
+    base64urlEncodeWithoutPadding(JSON.stringify(header)),
+    base64urlEncodeWithoutPadding(JSON.stringify(payload)),
+    signature
+  ].join(".");
+}
 var emulatorStatus = {};
 function getEmulatorSummary() {
   const summary = {
@@ -416,12 +489,12 @@ function getOrCreateEl(id) {
   return { created, element: parentDiv };
 }
 var previouslyDismissed = false;
-function updateEmulatorBanner(name3, isRunningEmulator) {
-  if (typeof window === "undefined" || typeof document === "undefined" || !isCloudWorkstation(window.location.host) || emulatorStatus[name3] === isRunningEmulator || emulatorStatus[name3] || // If already set to use emulator, can't go back to prod.
+function updateEmulatorBanner(name2, isRunningEmulator) {
+  if (typeof window === "undefined" || typeof document === "undefined" || !isCloudWorkstation(window.location.host) || emulatorStatus[name2] === isRunningEmulator || emulatorStatus[name2] || // If already set to use emulator, can't go back to prod.
   previouslyDismissed) {
     return;
   }
-  emulatorStatus[name3] = isRunningEmulator;
+  emulatorStatus[name2] = isRunningEmulator;
   function prefixedId(id) {
     return `__firebase__banner__${id}`;
   }
@@ -550,6 +623,9 @@ function isIE() {
   const ua = getUA();
   return ua.indexOf("MSIE ") >= 0 || ua.indexOf("Trident/") >= 0;
 }
+function isNodeSdk() {
+  return CONSTANTS.NODE_CLIENT === true || CONSTANTS.NODE_ADMIN === true;
+}
 function isIndexedDBAvailable() {
   try {
     return typeof indexedDB === "object";
@@ -618,6 +694,48 @@ function replaceTemplate(template, data) {
   });
 }
 var PATTERN = /\{\$([^}]+)}/g;
+function jsonEval(str) {
+  return JSON.parse(str);
+}
+function stringify(data) {
+  return JSON.stringify(data);
+}
+var decode = function(token) {
+  let header = {}, claims = {}, data = {}, signature = "";
+  try {
+    const parts = token.split(".");
+    header = jsonEval(base64Decode(parts[0]) || "");
+    claims = jsonEval(base64Decode(parts[1]) || "");
+    signature = parts[2];
+    data = claims["d"] || {};
+    delete claims["d"];
+  } catch (e) {
+  }
+  return {
+    header,
+    claims,
+    data,
+    signature
+  };
+};
+var isValidFormat = function(token) {
+  const decoded = decode(token), claims = decoded.claims;
+  return !!claims && typeof claims === "object" && claims.hasOwnProperty("iat");
+};
+var isAdmin = function(token) {
+  const claims = decode(token).claims;
+  return typeof claims === "object" && claims["admin"] === true;
+};
+function contains(obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+function safeGet(obj, key) {
+  if (Object.prototype.hasOwnProperty.call(obj, key)) {
+    return obj[key];
+  } else {
+    return void 0;
+  }
+}
 function isEmpty(obj) {
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -625,6 +743,15 @@ function isEmpty(obj) {
     }
   }
   return true;
+}
+function map(obj, fn, contextObj) {
+  const res = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      res[key] = fn.call(contextObj, obj[key], key, obj);
+    }
+  }
+  return res;
 }
 function deepEqual(a, b) {
   if (a === b) {
@@ -688,6 +815,162 @@ function extractQuerystring(url) {
   const fragmentStart = url.indexOf("#", queryStart);
   return url.substring(queryStart, fragmentStart > 0 ? fragmentStart : void 0);
 }
+var Sha1 = class {
+  constructor() {
+    this.chain_ = [];
+    this.buf_ = [];
+    this.W_ = [];
+    this.pad_ = [];
+    this.inbuf_ = 0;
+    this.total_ = 0;
+    this.blockSize = 512 / 8;
+    this.pad_[0] = 128;
+    for (let i = 1; i < this.blockSize; ++i) {
+      this.pad_[i] = 0;
+    }
+    this.reset();
+  }
+  reset() {
+    this.chain_[0] = 1732584193;
+    this.chain_[1] = 4023233417;
+    this.chain_[2] = 2562383102;
+    this.chain_[3] = 271733878;
+    this.chain_[4] = 3285377520;
+    this.inbuf_ = 0;
+    this.total_ = 0;
+  }
+  /**
+   * Internal compress helper function.
+   * @param buf Block to compress.
+   * @param offset Offset of the block in the buffer.
+   * @private
+   */
+  compress_(buf, offset) {
+    if (!offset) {
+      offset = 0;
+    }
+    const W = this.W_;
+    if (typeof buf === "string") {
+      for (let i = 0; i < 16; i++) {
+        W[i] = buf.charCodeAt(offset) << 24 | buf.charCodeAt(offset + 1) << 16 | buf.charCodeAt(offset + 2) << 8 | buf.charCodeAt(offset + 3);
+        offset += 4;
+      }
+    } else {
+      for (let i = 0; i < 16; i++) {
+        W[i] = buf[offset] << 24 | buf[offset + 1] << 16 | buf[offset + 2] << 8 | buf[offset + 3];
+        offset += 4;
+      }
+    }
+    for (let i = 16; i < 80; i++) {
+      const t = W[i - 3] ^ W[i - 8] ^ W[i - 14] ^ W[i - 16];
+      W[i] = (t << 1 | t >>> 31) & 4294967295;
+    }
+    let a = this.chain_[0];
+    let b = this.chain_[1];
+    let c = this.chain_[2];
+    let d = this.chain_[3];
+    let e = this.chain_[4];
+    let f, k;
+    for (let i = 0; i < 80; i++) {
+      if (i < 40) {
+        if (i < 20) {
+          f = d ^ b & (c ^ d);
+          k = 1518500249;
+        } else {
+          f = b ^ c ^ d;
+          k = 1859775393;
+        }
+      } else {
+        if (i < 60) {
+          f = b & c | d & (b | c);
+          k = 2400959708;
+        } else {
+          f = b ^ c ^ d;
+          k = 3395469782;
+        }
+      }
+      const t = (a << 5 | a >>> 27) + f + e + k + W[i] & 4294967295;
+      e = d;
+      d = c;
+      c = (b << 30 | b >>> 2) & 4294967295;
+      b = a;
+      a = t;
+    }
+    this.chain_[0] = this.chain_[0] + a & 4294967295;
+    this.chain_[1] = this.chain_[1] + b & 4294967295;
+    this.chain_[2] = this.chain_[2] + c & 4294967295;
+    this.chain_[3] = this.chain_[3] + d & 4294967295;
+    this.chain_[4] = this.chain_[4] + e & 4294967295;
+  }
+  update(bytes, length) {
+    if (bytes == null) {
+      return;
+    }
+    if (length === void 0) {
+      length = bytes.length;
+    }
+    const lengthMinusBlock = length - this.blockSize;
+    let n = 0;
+    const buf = this.buf_;
+    let inbuf = this.inbuf_;
+    while (n < length) {
+      if (inbuf === 0) {
+        while (n <= lengthMinusBlock) {
+          this.compress_(bytes, n);
+          n += this.blockSize;
+        }
+      }
+      if (typeof bytes === "string") {
+        while (n < length) {
+          buf[inbuf] = bytes.charCodeAt(n);
+          ++inbuf;
+          ++n;
+          if (inbuf === this.blockSize) {
+            this.compress_(buf);
+            inbuf = 0;
+            break;
+          }
+        }
+      } else {
+        while (n < length) {
+          buf[inbuf] = bytes[n];
+          ++inbuf;
+          ++n;
+          if (inbuf === this.blockSize) {
+            this.compress_(buf);
+            inbuf = 0;
+            break;
+          }
+        }
+      }
+    }
+    this.inbuf_ = inbuf;
+    this.total_ += length;
+  }
+  /** @override */
+  digest() {
+    const digest = [];
+    let totalBits = this.total_ * 8;
+    if (this.inbuf_ < 56) {
+      this.update(this.pad_, 56 - this.inbuf_);
+    } else {
+      this.update(this.pad_, this.blockSize - (this.inbuf_ - 56));
+    }
+    for (let i = this.blockSize - 1; i >= 56; i--) {
+      this.buf_[i] = totalBits & 255;
+      totalBits /= 256;
+    }
+    this.compress_(this.buf_);
+    let n = 0;
+    for (let i = 0; i < 5; i++) {
+      for (let j = 24; j >= 0; j -= 8) {
+        digest[n] = this.chain_[i] >> j & 255;
+        ++n;
+      }
+    }
+    return digest;
+  }
+};
 function createSubscribe(executor, onNoObservers) {
   const proxy = new ObserverProxy(executor, onNoObservers);
   return proxy.subscribe.bind(proxy);
@@ -841,6 +1124,56 @@ function implementsAnyMethods(obj, methods) {
 }
 function noop() {
 }
+function errorPrefix(fnName, argName) {
+  return `${fnName} failed: ${argName} argument `;
+}
+var stringToByteArray = function(str) {
+  const out = [];
+  let p = 0;
+  for (let i = 0; i < str.length; i++) {
+    let c = str.charCodeAt(i);
+    if (c >= 55296 && c <= 56319) {
+      const high = c - 55296;
+      i++;
+      assert(i < str.length, "Surrogate pair missing trail surrogate.");
+      const low = str.charCodeAt(i) - 56320;
+      c = 65536 + (high << 10) + low;
+    }
+    if (c < 128) {
+      out[p++] = c;
+    } else if (c < 2048) {
+      out[p++] = c >> 6 | 192;
+      out[p++] = c & 63 | 128;
+    } else if (c < 65536) {
+      out[p++] = c >> 12 | 224;
+      out[p++] = c >> 6 & 63 | 128;
+      out[p++] = c & 63 | 128;
+    } else {
+      out[p++] = c >> 18 | 240;
+      out[p++] = c >> 12 & 63 | 128;
+      out[p++] = c >> 6 & 63 | 128;
+      out[p++] = c & 63 | 128;
+    }
+  }
+  return out;
+};
+var stringLength = function(str) {
+  let p = 0;
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    if (c < 128) {
+      p++;
+    } else if (c < 2048) {
+      p += 2;
+    } else if (c >= 55296 && c <= 56319) {
+      p += 4;
+      i++;
+    } else {
+      p += 3;
+    }
+  }
+  return p;
+};
 var MAX_VALUE_MILLIS = 4 * 60 * 60 * 1e3;
 function getModularInstance(service) {
   if (service && service._delegate) {
@@ -858,8 +1191,8 @@ var Component = class {
    * @param instanceFactory Service factory responsible for creating the public interface
    * @param type whether the service provided by the component is public or private
    */
-  constructor(name3, instanceFactory, type) {
-    this.name = name3;
+  constructor(name2, instanceFactory, type) {
+    this.name = name2;
     this.instanceFactory = instanceFactory;
     this.type = type;
     this.multipleInstances = false;
@@ -886,8 +1219,8 @@ var Component = class {
 };
 var DEFAULT_ENTRY_NAME = "[DEFAULT]";
 var Provider = class {
-  constructor(name3, container) {
-    this.name = name3;
+  constructor(name2, container) {
+    this.name = name2;
     this.container = container;
     this.component = null;
     this.instances = /* @__PURE__ */ new Map();
@@ -1094,8 +1427,8 @@ function isComponentEager(component) {
   return component.instantiationMode === "EAGER";
 }
 var ComponentContainer = class {
-  constructor(name3) {
-    this.name = name3;
+  constructor(name2) {
+    this.name = name2;
     this.providers = /* @__PURE__ */ new Map();
   }
   /**
@@ -1128,12 +1461,12 @@ var ComponentContainer = class {
    * Firebase SDKs providing services should extend NameServiceMapping interface to register
    * themselves.
    */
-  getProvider(name3) {
-    if (this.providers.has(name3)) {
-      return this.providers.get(name3);
+  getProvider(name2) {
+    if (this.providers.has(name2)) {
+      return this.providers.get(name2);
     }
-    const provider = new Provider(name3, this);
-    this.providers.set(name3, provider);
+    const provider = new Provider(name2, this);
+    this.providers.set(name2, provider);
     return provider;
   }
   getProviders() {
@@ -1144,13 +1477,13 @@ var ComponentContainer = class {
 // node_modules/@firebase/logger/dist/esm/index.esm2017.js
 var instances = [];
 var LogLevel;
-(function(LogLevel3) {
-  LogLevel3[LogLevel3["DEBUG"] = 0] = "DEBUG";
-  LogLevel3[LogLevel3["VERBOSE"] = 1] = "VERBOSE";
-  LogLevel3[LogLevel3["INFO"] = 2] = "INFO";
-  LogLevel3[LogLevel3["WARN"] = 3] = "WARN";
-  LogLevel3[LogLevel3["ERROR"] = 4] = "ERROR";
-  LogLevel3[LogLevel3["SILENT"] = 5] = "SILENT";
+(function(LogLevel2) {
+  LogLevel2[LogLevel2["DEBUG"] = 0] = "DEBUG";
+  LogLevel2[LogLevel2["VERBOSE"] = 1] = "VERBOSE";
+  LogLevel2[LogLevel2["INFO"] = 2] = "INFO";
+  LogLevel2[LogLevel2["WARN"] = 3] = "WARN";
+  LogLevel2[LogLevel2["ERROR"] = 4] = "ERROR";
+  LogLevel2[LogLevel2["SILENT"] = 5] = "SILENT";
 })(LogLevel || (LogLevel = {}));
 var levelStringToEnum = {
   "debug": LogLevel.DEBUG,
@@ -1187,8 +1520,8 @@ var Logger = class {
    *
    * @param name The name that the logs will be associated with
    */
-  constructor(name3) {
-    this.name = name3;
+  constructor(name2) {
+    this.name = name2;
     this._logLevel = defaultLogLevel;
     this._logHandler = defaultLogHandler;
     this._userLogHandler = null;
@@ -1435,8 +1768,8 @@ function wrap(value) {
 var unwrap = (value) => reverseTransformCache.get(value);
 
 // node_modules/idb/build/index.js
-function openDB(name3, version3, { blocked, upgrade, blocking, terminated } = {}) {
-  const request = indexedDB.open(name3, version3);
+function openDB(name2, version2, { blocked, upgrade, blocking, terminated } = {}) {
+  const request = indexedDB.open(name2, version2);
   const openPromise = wrap(request);
   if (upgrade) {
     request.addEventListener("upgradeneeded", (event) => {
@@ -1612,15 +1945,15 @@ function _registerComponent(component) {
   }
   return true;
 }
-function _getProvider(app, name3) {
+function _getProvider(app, name2) {
   const heartbeatController = app.container.getProvider("heartbeat").getImmediate({ optional: true });
   if (heartbeatController) {
     void heartbeatController.triggerHeartbeat();
   }
-  return app.container.getProvider(name3);
+  return app.container.getProvider(name2);
 }
-function _removeServiceInstance(app, name3, instanceIdentifier = DEFAULT_ENTRY_NAME2) {
-  _getProvider(app, name3).clearInstance(instanceIdentifier);
+function _removeServiceInstance(app, name2, instanceIdentifier = DEFAULT_ENTRY_NAME2) {
+  _getProvider(app, name2).clearInstance(instanceIdentifier);
 }
 function _isFirebaseApp(obj) {
   return obj.options !== void 0;
@@ -1766,10 +2099,10 @@ function validateTokenTTL(base64Token, tokenName) {
   }
 }
 var FirebaseServerAppImpl = class extends FirebaseAppImpl {
-  constructor(options, serverConfig, name3, container) {
+  constructor(options, serverConfig, name2, container) {
     const automaticDataCollectionEnabled = serverConfig.automaticDataCollectionEnabled !== void 0 ? serverConfig.automaticDataCollectionEnabled : true;
     const config = {
-      name: name3,
+      name: name2,
       automaticDataCollectionEnabled
     };
     if (options.apiKey !== void 0) {
@@ -1848,14 +2181,14 @@ var SDK_VERSION = version;
 function initializeApp(_options, rawConfig = {}) {
   let options = _options;
   if (typeof rawConfig !== "object") {
-    const name4 = rawConfig;
-    rawConfig = { name: name4 };
+    const name3 = rawConfig;
+    rawConfig = { name: name3 };
   }
   const config = Object.assign({ name: DEFAULT_ENTRY_NAME2, automaticDataCollectionEnabled: true }, rawConfig);
-  const name3 = config.name;
-  if (typeof name3 !== "string" || !name3) {
+  const name2 = config.name;
+  if (typeof name2 !== "string" || !name2) {
     throw ERROR_FACTORY.create("bad-app-name", {
-      appName: String(name3)
+      appName: String(name2)
     });
   }
   options || (options = getDefaultAppConfig());
@@ -1865,20 +2198,20 @@ function initializeApp(_options, rawConfig = {}) {
       /* AppError.NO_OPTIONS */
     );
   }
-  const existingApp = _apps.get(name3);
+  const existingApp = _apps.get(name2);
   if (existingApp) {
     if (deepEqual(options, existingApp.options) && deepEqual(config, existingApp.config)) {
       return existingApp;
     } else {
-      throw ERROR_FACTORY.create("duplicate-app", { appName: name3 });
+      throw ERROR_FACTORY.create("duplicate-app", { appName: name2 });
     }
   }
-  const container = new ComponentContainer(name3);
+  const container = new ComponentContainer(name2);
   for (const component of _components.values()) {
     container.addComponent(component);
   }
   const newApp = new FirebaseAppImpl(options, config, container);
-  _apps.set(name3, newApp);
+  _apps.set(name2, newApp);
   return newApp;
 }
 function initializeServerApp(_options, _serverAppConfig) {
@@ -1923,13 +2256,13 @@ function initializeServerApp(_options, _serverAppConfig) {
   _serverApps.set(nameString, newApp);
   return newApp;
 }
-function getApp(name3 = DEFAULT_ENTRY_NAME2) {
-  const app = _apps.get(name3);
-  if (!app && name3 === DEFAULT_ENTRY_NAME2 && getDefaultAppConfig()) {
+function getApp(name2 = DEFAULT_ENTRY_NAME2) {
+  const app = _apps.get(name2);
+  if (!app && name2 === DEFAULT_ENTRY_NAME2 && getDefaultAppConfig()) {
     return initializeApp();
   }
   if (!app) {
-    throw ERROR_FACTORY.create("no-app", { appName: name3 });
+    throw ERROR_FACTORY.create("no-app", { appName: name2 });
   }
   return app;
 }
@@ -1939,14 +2272,14 @@ function getApps() {
 function deleteApp(app) {
   return __async(this, null, function* () {
     let cleanupProviders = false;
-    const name3 = app.name;
-    if (_apps.has(name3)) {
+    const name2 = app.name;
+    if (_apps.has(name2)) {
       cleanupProviders = true;
-      _apps.delete(name3);
-    } else if (_serverApps.has(name3)) {
+      _apps.delete(name2);
+    } else if (_serverApps.has(name2)) {
       const firebaseServerApp = app;
       if (firebaseServerApp.decRefCount() <= 0) {
-        _serverApps.delete(name3);
+        _serverApps.delete(name2);
         cleanupProviders = true;
       }
     }
@@ -1956,17 +2289,17 @@ function deleteApp(app) {
     }
   });
 }
-function registerVersion(libraryKeyOrName, version3, variant) {
+function registerVersion(libraryKeyOrName, version2, variant) {
   var _a;
   let library = (_a = PLATFORM_LOG_STRING[libraryKeyOrName]) !== null && _a !== void 0 ? _a : libraryKeyOrName;
   if (variant) {
     library += `-${variant}`;
   }
   const libraryMismatch = library.match(/\s|\//);
-  const versionMismatch = version3.match(/\s|\//);
+  const versionMismatch = version2.match(/\s|\//);
   if (libraryMismatch || versionMismatch) {
     const warning = [
-      `Unable to register library "${library}" with version "${version3}":`
+      `Unable to register library "${library}" with version "${version2}":`
     ];
     if (libraryMismatch) {
       warning.push(`library name "${library}" contains illegal characters (whitespace or "/")`);
@@ -1975,14 +2308,14 @@ function registerVersion(libraryKeyOrName, version3, variant) {
       warning.push("and");
     }
     if (versionMismatch) {
-      warning.push(`version name "${version3}" contains illegal characters (whitespace or "/")`);
+      warning.push(`version name "${version2}" contains illegal characters (whitespace or "/")`);
     }
     logger.warn(warning.join(" "));
     return;
   }
   _registerComponent(new Component(
     `${library}-version`,
-    () => ({ library, version: version3 }),
+    () => ({ library, version: version2 }),
     "VERSION"
     /* ComponentType.VERSION */
   ));
@@ -2290,322 +2623,21 @@ function registerCoreComponents(variant) {
 }
 registerCoreComponents("");
 
-// node_modules/firebase/app/dist/esm/index.esm.js
-var name2 = "firebase";
-var version2 = "11.9.1";
-registerVersion(name2, version2, "app");
-
-// node_modules/@angular/core/fesm2022/rxjs-interop.mjs
-function pendingUntilEvent(injector) {
-  if (injector === void 0) {
-    ngDevMode && assertInInjectionContext(pendingUntilEvent);
-    injector = inject(Injector);
-  }
-  const taskService = injector.get(PendingTasks);
-  return (sourceObservable) => {
-    return new Observable((originalSubscriber) => {
-      const removeTask = taskService.add();
-      let cleanedUp = false;
-      function cleanupTask() {
-        if (cleanedUp) {
-          return;
-        }
-        removeTask();
-        cleanedUp = true;
-      }
-      const innerSubscription = sourceObservable.subscribe({
-        next: (v) => {
-          originalSubscriber.next(v);
-          cleanupTask();
-        },
-        complete: () => {
-          originalSubscriber.complete();
-          cleanupTask();
-        },
-        error: (e) => {
-          originalSubscriber.error(e);
-          cleanupTask();
-        }
-      });
-      innerSubscription.add(() => {
-        originalSubscriber.unsubscribe();
-        cleanupTask();
-      });
-      return innerSubscription;
-    });
-  };
-}
-
-// node_modules/@angular/fire/fesm2022/angular-fire.mjs
-var VERSION2 = new Version("ANGULARFIRE2_VERSION");
-function ɵgetDefaultInstanceOf(identifier, provided, defaultApp) {
-  if (provided) {
-    if (provided.length === 1) {
-      return provided[0];
-    }
-    const providedUsingDefaultApp = provided.filter((it) => it.app === defaultApp);
-    if (providedUsingDefaultApp.length === 1) {
-      return providedUsingDefaultApp[0];
-    }
-  }
-  const defaultAppWithContainer = defaultApp;
-  const provider = defaultAppWithContainer.container.getProvider(identifier);
-  return provider.getImmediate({
-    optional: true
-  });
-}
-var ɵgetAllInstancesOf = (identifier, app) => {
-  const apps = app ? [app] : getApps();
-  const instances2 = [];
-  apps.forEach((app2) => {
-    const provider = app2.container.getProvider(identifier);
-    provider.instances.forEach((instance) => {
-      if (!instances2.includes(instance)) {
-        instances2.push(instance);
-      }
-    });
-  });
-  return instances2;
-};
-var LogLevel2;
-(function(LogLevel3) {
-  LogLevel3[LogLevel3["SILENT"] = 0] = "SILENT";
-  LogLevel3[LogLevel3["WARN"] = 1] = "WARN";
-  LogLevel3[LogLevel3["VERBOSE"] = 2] = "VERBOSE";
-})(LogLevel2 || (LogLevel2 = {}));
-var currentLogLevel = isDevMode() && typeof Zone !== "undefined" ? LogLevel2.WARN : LogLevel2.SILENT;
-var ɵZoneScheduler = class {
-  zone;
-  delegate;
-  constructor(zone, delegate = queueScheduler) {
-    this.zone = zone;
-    this.delegate = delegate;
-  }
-  now() {
-    return this.delegate.now();
-  }
-  schedule(work, delay, state) {
-    const targetZone = this.zone;
-    const workInZone = function(state2) {
-      if (targetZone) {
-        targetZone.runGuarded(() => {
-          work.apply(this, [state2]);
-        });
-      } else {
-        work.apply(this, [state2]);
-      }
-    };
-    return this.delegate.schedule(workInZone, delay, state);
-  }
-};
-var ɵAngularFireSchedulers = class _ɵAngularFireSchedulers {
-  outsideAngular;
-  insideAngular;
-  constructor() {
-    const ngZone = inject(NgZone);
-    this.outsideAngular = ngZone.runOutsideAngular(() => new ɵZoneScheduler(typeof Zone === "undefined" ? void 0 : Zone.current));
-    this.insideAngular = ngZone.run(() => new ɵZoneScheduler(typeof Zone === "undefined" ? void 0 : Zone.current, asyncScheduler));
-  }
-  static ɵfac = function ɵAngularFireSchedulers_Factory(__ngFactoryType__) {
-    return new (__ngFactoryType__ || _ɵAngularFireSchedulers)();
-  };
-  static ɵprov = ɵɵdefineInjectable({
-    token: _ɵAngularFireSchedulers,
-    factory: _ɵAngularFireSchedulers.ɵfac,
-    providedIn: "root"
-  });
-};
-(() => {
-  (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(ɵAngularFireSchedulers, [{
-    type: Injectable,
-    args: [{
-      providedIn: "root"
-    }]
-  }], () => [], null);
-})();
-var alreadyWarned = false;
-function warnOutsideInjectionContext(original, logLevel) {
-  if (!alreadyWarned && (currentLogLevel > LogLevel2.SILENT || isDevMode())) {
-    alreadyWarned = true;
-    console.warn("Calling Firebase APIs outside of an Injection context may destabilize your application leading to subtle change-detection and hydration bugs. Find more at https://github.com/angular/angularfire/blob/main/docs/zones.md");
-  }
-  if (currentLogLevel >= logLevel) {
-    console.warn(`Firebase API called outside injection context: ${original.name}`);
-  }
-}
-function runOutsideAngular(fn) {
-  const ngZone = inject(NgZone, {
-    optional: true
-  });
-  if (!ngZone) {
-    return fn();
-  }
-  return ngZone.runOutsideAngular(() => fn());
-}
-function run(fn) {
-  const ngZone = inject(NgZone, {
-    optional: true
-  });
-  if (!ngZone) {
-    return fn();
-  }
-  return ngZone.run(() => fn());
-}
-var zoneWrapFn = (it, taskDone, injector) => {
-  return (...args) => {
-    if (taskDone) {
-      setTimeout(taskDone, 0);
-    }
-    return runInInjectionContext(injector, () => run(() => it.apply(void 0, args)));
-  };
-};
-var ɵzoneWrap = (it, blockUntilFirst, logLevel) => {
-  logLevel ||= blockUntilFirst ? LogLevel2.WARN : LogLevel2.VERBOSE;
-  return function() {
-    let taskDone;
-    const _arguments = arguments;
-    let schedulers;
-    let pendingTasks;
-    let injector;
-    try {
-      schedulers = inject(ɵAngularFireSchedulers);
-      pendingTasks = inject(PendingTasks);
-      injector = inject(EnvironmentInjector);
-    } catch (e) {
-      warnOutsideInjectionContext(it, logLevel);
-      return it.apply(this, _arguments);
-    }
-    for (let i = 0; i < arguments.length; i++) {
-      if (typeof _arguments[i] === "function") {
-        if (blockUntilFirst) {
-          taskDone ||= run(() => pendingTasks.add());
-        }
-        _arguments[i] = zoneWrapFn(_arguments[i], taskDone, injector);
-      }
-    }
-    const ret = runOutsideAngular(() => it.apply(this, _arguments));
-    if (!blockUntilFirst) {
-      if (ret instanceof Observable) {
-        return ret.pipe(subscribeOn(schedulers.outsideAngular), observeOn(schedulers.insideAngular));
-      } else {
-        return run(() => ret);
-      }
-    }
-    if (ret instanceof Observable) {
-      return ret.pipe(subscribeOn(schedulers.outsideAngular), observeOn(schedulers.insideAngular), pendingUntilEvent(injector));
-    } else if (ret instanceof Promise) {
-      return run(() => {
-        const removeTask = pendingTasks.add();
-        return new Promise((resolve, reject) => {
-          ret.then((it2) => runInInjectionContext(injector, () => run(() => resolve(it2))), (reason) => runInInjectionContext(injector, () => run(() => reject(reason)))).finally(removeTask);
-        });
-      });
-    } else if (typeof ret === "function" && taskDone) {
-      return function() {
-        setTimeout(taskDone, 0);
-        return ret.apply(this, arguments);
-      };
-    } else {
-      return run(() => ret);
-    }
-  };
-};
-
-// node_modules/@angular/fire/fesm2022/angular-fire-app.mjs
-var FirebaseApp = class {
-  constructor(app) {
-    return app;
-  }
-};
-var FirebaseApps = class {
-  constructor() {
-    return getApps();
-  }
-};
-var firebaseApp$ = timer(0, 300).pipe(concatMap(() => from(getApps())), distinct());
-function defaultFirebaseAppFactory(provided) {
-  if (provided && provided.length === 1) {
-    return provided[0];
-  }
-  return new FirebaseApp(getApp());
-}
-var PROVIDED_FIREBASE_APPS = new InjectionToken("angularfire2._apps");
-var DEFAULT_FIREBASE_APP_PROVIDER = {
-  provide: FirebaseApp,
-  useFactory: defaultFirebaseAppFactory,
-  deps: [[new Optional(), PROVIDED_FIREBASE_APPS]]
-};
-var FIREBASE_APPS_PROVIDER = {
-  provide: FirebaseApps,
-  deps: [[new Optional(), PROVIDED_FIREBASE_APPS]]
-};
-function firebaseAppFactory(fn) {
-  return (zone, injector) => {
-    const platformId = injector.get(PLATFORM_ID);
-    registerVersion("angularfire", VERSION2.full, "core");
-    registerVersion("angularfire", VERSION2.full, "app");
-    registerVersion("angular", VERSION.full, platformId.toString());
-    const app = zone.runOutsideAngular(() => fn(injector));
-    return new FirebaseApp(app);
-  };
-}
-var FirebaseAppModule = class _FirebaseAppModule {
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  constructor(platformId) {
-    registerVersion("angularfire", VERSION2.full, "core");
-    registerVersion("angularfire", VERSION2.full, "app");
-    registerVersion("angular", VERSION.full, platformId.toString());
-  }
-  static ɵfac = function FirebaseAppModule_Factory(__ngFactoryType__) {
-    return new (__ngFactoryType__ || _FirebaseAppModule)(ɵɵinject(PLATFORM_ID));
-  };
-  static ɵmod = ɵɵdefineNgModule({
-    type: _FirebaseAppModule
-  });
-  static ɵinj = ɵɵdefineInjector({
-    providers: [DEFAULT_FIREBASE_APP_PROVIDER, FIREBASE_APPS_PROVIDER]
-  });
-};
-(() => {
-  (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(FirebaseAppModule, [{
-    type: NgModule,
-    args: [{
-      providers: [DEFAULT_FIREBASE_APP_PROVIDER, FIREBASE_APPS_PROVIDER]
-    }]
-  }], () => [{
-    type: Object,
-    decorators: [{
-      type: Inject,
-      args: [PLATFORM_ID]
-    }]
-  }], null);
-})();
-function provideFirebaseApp(fn, ...deps) {
-  return makeEnvironmentProviders([DEFAULT_FIREBASE_APP_PROVIDER, FIREBASE_APPS_PROVIDER, {
-    provide: PROVIDED_FIREBASE_APPS,
-    useFactory: firebaseAppFactory(fn),
-    multi: true,
-    deps: [NgZone, Injector, ɵAngularFireSchedulers, ...deps]
-  }]);
-}
-var deleteApp2 = ɵzoneWrap(deleteApp, true);
-var getApp2 = ɵzoneWrap(getApp, true);
-var getApps2 = ɵzoneWrap(getApps, true);
-var initializeApp2 = ɵzoneWrap(initializeApp, true);
-var initializeServerApp2 = ɵzoneWrap(initializeServerApp, true);
-var onLog2 = ɵzoneWrap(onLog, true);
-var registerVersion2 = ɵzoneWrap(registerVersion, true);
-var setLogLevel3 = ɵzoneWrap(setLogLevel2, true);
-
 export {
+  assert,
+  assertionError,
   base64,
+  base64Encode,
   base64Decode,
+  deepCopy,
   getGlobal,
   getDefaultEmulatorHost,
+  getDefaultEmulatorHostnameAndPort,
   getExperimentalSetting,
   Deferred,
   isCloudWorkstation,
   pingServer,
+  createMockUserToken,
   updateEmulatorBanner,
   getUA,
   isMobileCordova,
@@ -2613,17 +2645,31 @@ export {
   isBrowserExtension,
   isReactNative,
   isIE,
+  isNodeSdk,
   isIndexedDBAvailable,
   FirebaseError,
   ErrorFactory,
+  jsonEval,
+  stringify,
+  isValidFormat,
+  isAdmin,
+  contains,
+  safeGet,
   isEmpty,
+  map,
   deepEqual,
   querystring,
   querystringDecode,
   extractQuerystring,
+  Sha1,
   createSubscribe,
+  errorPrefix,
+  stringToByteArray,
+  stringLength,
   getModularInstance,
   Component,
+  Provider,
+  ComponentContainer,
   LogLevel,
   Logger,
   DEFAULT_ENTRY_NAME2 as DEFAULT_ENTRY_NAME,
@@ -2639,40 +2685,18 @@ export {
   _isFirebaseServerApp,
   _clearComponents,
   SDK_VERSION,
+  initializeApp,
+  initializeServerApp,
   getApp,
+  getApps,
+  deleteApp,
   registerVersion,
-  VERSION2 as VERSION,
-  ɵgetDefaultInstanceOf,
-  ɵgetAllInstancesOf,
-  ɵAngularFireSchedulers,
-  ɵzoneWrap,
-  FirebaseApp,
-  FirebaseApps,
-  firebaseApp$,
-  FirebaseAppModule,
-  provideFirebaseApp,
-  deleteApp2 as deleteApp,
-  getApp2,
-  getApps2 as getApps,
-  initializeApp2 as initializeApp,
-  initializeServerApp2 as initializeServerApp,
-  onLog2 as onLog,
-  registerVersion2,
-  setLogLevel3 as setLogLevel
+  onLog,
+  setLogLevel2 as setLogLevel
 };
 /*! Bundled license information:
 
 @firebase/util/dist/index.esm2017.js:
-@firebase/util/dist/index.esm2017.js:
-@firebase/util/dist/index.esm2017.js:
-@firebase/util/dist/index.esm2017.js:
-@firebase/util/dist/index.esm2017.js:
-@firebase/util/dist/index.esm2017.js:
-@firebase/util/dist/index.esm2017.js:
-@firebase/util/dist/index.esm2017.js:
-@firebase/util/dist/index.esm2017.js:
-@firebase/util/dist/index.esm2017.js:
-@firebase/logger/dist/esm/index.esm2017.js:
   (**
    * @license
    * Copyright 2017 Google LLC
@@ -2689,30 +2713,9 @@ export {
    * See the License for the specific language governing permissions and
    * limitations under the License.
    *)
-
-@firebase/util/dist/index.esm2017.js:
-@firebase/util/dist/index.esm2017.js:
   (**
    * @license
    * Copyright 2022 Google LLC
-   *
-   * Licensed under the Apache License, Version 2.0 (the "License");
-   * you may not use this file except in compliance with the License.
-   * You may obtain a copy of the License at
-   *
-   *   http://www.apache.org/licenses/LICENSE-2.0
-   *
-   * Unless required by applicable law or agreed to in writing, software
-   * distributed under the License is distributed on an "AS IS" BASIS,
-   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   * See the License for the specific language governing permissions and
-   * limitations under the License.
-   *)
-
-@firebase/util/dist/index.esm2017.js:
-  (**
-   * @license
-   * Copyright 2017 Google LLC
    *
    * Licensed under the Apache License, Version 2.0 (the "License");
    * you may not use this file except in compliance with the License.
@@ -2760,7 +2763,77 @@ export {
    *)
 
 @firebase/util/dist/index.esm2017.js:
-@firebase/component/dist/esm/index.esm2017.js:
+@firebase/util/dist/index.esm2017.js:
+@firebase/util/dist/index.esm2017.js:
+@firebase/logger/dist/esm/index.esm2017.js:
+  (**
+   * @license
+   * Copyright 2017 Google LLC
+   *
+   * Licensed under the Apache License, Version 2.0 (the "License");
+   * you may not use this file except in compliance with the License.
+   * You may obtain a copy of the License at
+   *
+   *   http://www.apache.org/licenses/LICENSE-2.0
+   *
+   * Unless required by applicable law or agreed to in writing, software
+   * distributed under the License is distributed on an "AS IS" BASIS,
+   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   * See the License for the specific language governing permissions and
+   * limitations under the License.
+   *)
+
+@firebase/util/dist/index.esm2017.js:
+  (**
+   * @license
+   * Copyright 2017 Google LLC
+   *
+   * Licensed under the Apache License, Version 2.0 (the "License");
+   * you may not use this file except in compliance with the License.
+   * You may obtain a copy of the License at
+   *
+   *   http://www.apache.org/licenses/LICENSE-2.0
+   *
+   * Unless required by applicable law or agreed to in writing, software
+   * distributed under the License is distributed on an "AS IS" BASIS,
+   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   * See the License for the specific language governing permissions and
+   * limitations under the License.
+   *)
+  (**
+   * @license
+   * Copyright 2022 Google LLC
+   *
+   * Licensed under the Apache License, Version 2.0 (the "License");
+   * you may not use this file except in compliance with the License.
+   * You may obtain a copy of the License at
+   *
+   *   http://www.apache.org/licenses/LICENSE-2.0
+   *
+   * Unless required by applicable law or agreed to in writing, software
+   * distributed under the License is distributed on an "AS IS" BASIS,
+   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   * See the License for the specific language governing permissions and
+   * limitations under the License.
+   *)
+
+@firebase/util/dist/index.esm2017.js:
+  (**
+   * @license
+   * Copyright 2017 Google LLC
+   *
+   * Licensed under the Apache License, Version 2.0 (the "License");
+   * you may not use this file except in compliance with the License.
+   * You may obtain a copy of the License at
+   *
+   *   http://www.apache.org/licenses/LICENSE-2.0
+   *
+   * Unless required by applicable law or agreed to in writing, software
+   * distributed under the License is distributed on an "AS IS" BASIS,
+   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   * See the License for the specific language governing permissions and
+   * limitations under the License.
+   *)
   (**
    * @license
    * Copyright 2019 Google LLC
@@ -2779,7 +2852,6 @@ export {
    *)
 
 @firebase/util/dist/index.esm2017.js:
-firebase/app/dist/esm/index.esm.js:
   (**
    * @license
    * Copyright 2020 Google LLC
@@ -2801,6 +2873,24 @@ firebase/app/dist/esm/index.esm.js:
   (**
    * @license
    * Copyright 2021 Google LLC
+   *
+   * Licensed under the Apache License, Version 2.0 (the "License");
+   * you may not use this file except in compliance with the License.
+   * You may obtain a copy of the License at
+   *
+   *   http://www.apache.org/licenses/LICENSE-2.0
+   *
+   * Unless required by applicable law or agreed to in writing, software
+   * distributed under the License is distributed on an "AS IS" BASIS,
+   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   * See the License for the specific language governing permissions and
+   * limitations under the License.
+   *)
+
+@firebase/component/dist/esm/index.esm2017.js:
+  (**
+   * @license
+   * Copyright 2019 Google LLC
    *
    * Licensed under the Apache License, Version 2.0 (the "License");
    * you may not use this file except in compliance with the License.
@@ -2864,12 +2954,5 @@ firebase/app/dist/esm/index.esm.js:
    * See the License for the specific language governing permissions and
    * limitations under the License.
    *)
-
-@angular/core/fesm2022/rxjs-interop.mjs:
-  (**
-   * @license Angular v20.0.3
-   * (c) 2010-2025 Google LLC. https://angular.io/
-   * License: MIT
-   *)
 */
-//# sourceMappingURL=chunk-I5MOGSJ4.js.map
+//# sourceMappingURL=chunk-2HIGFBL5.js.map
