@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg bg-body-tertiary rounded">
+<!-- <nav class="navbar navbar-expand-lg bg-body-tertiary rounded">
   <div class="container-fluid">
     <a class="navbar-brand" routerLink="/">Organic Shop</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
@@ -32,4 +32,62 @@
       </ul>
     </div>
   </div>
-</nav>
+</nav> -->
+
+<mat-toolbar color="primary">
+  <!-- <button matIconButton aria-label="menu-icon-button">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <span>Organic Shop</span> -->
+  <button mat-button matTooltip="Organic Shop" routerLink="/">
+    <mat-icon>storefront</mat-icon>
+    Organic Shop
+  </button>
+  <span class="example-spacer"></span>
+  <button matIconButton matTooltip="Shopping Cart" aria-label="cart-icon-button" routerLink="/shopping-cart">
+    <mat-icon>shopping_cart</mat-icon>
+  </button>
+  <ng-template #anonymousUser>
+    <button matIconButton matTooltip="Login" aria-label="Login-icon-button" routerLink="/login">
+      <mat-icon>login</mat-icon>
+    </button>
+  </ng-template>
+  <ng-container *ngIf="(currentUser | async) as user; else anonymousUser">
+    <button matIconButton [matTooltip]="user.displayName" aria-label="LoginUser-button"
+      [matMenuTriggerFor]="loginUserMenu">
+      <mat-icon>account_circle</mat-icon>
+    </button>
+    <mat-menu #loginUserMenu="matMenu">
+      <button mat-menu-item matTooltip="My Profile" matTooltipPosition="after" routerLink="/my-profile">
+        <mat-icon>account_box</mat-icon>
+        My Profile
+      </button>
+      <button mat-menu-item routerLink="/my-orders" matTooltip="My Orders" matTooltipPosition="after">
+        <mat-icon>shopping_basket</mat-icon>
+        My Orders
+      </button>
+      <ng-container *ngIf="user?.isAdmin">
+        <button mat-menu-item [matMenuTriggerFor]="adminMenu" matTooltip="Admin Panel" matTooltipPosition="above">
+          <mat-icon>admin_panel_settings</mat-icon>
+          Manage
+        </button>
+        <mat-menu #adminMenu="matMenu">
+          <button mat-menu-item routerLink="/admin/orders" matTooltip="Manage Orders" matTooltipPosition="before">
+            <mat-icon>list_alt</mat-icon>
+            Manage Orders
+          </button>
+          <button mat-menu-item routerLink="/admin/products" matTooltip="Manage Products" matTooltipPosition="before">
+            <mat-icon>inventory</mat-icon>
+            Manage Products
+          </button>
+        </mat-menu>
+      </ng-container>
+      <button mat-menu-item (click)="logout()" matTooltipPosition="after" matTooltip="Logout">
+        <mat-icon>logout</mat-icon>
+        Logout
+      </button>
+    </mat-menu>
+  </ng-container>
+</mat-toolbar>
+
+<!-- {{currentUser | async | json}} -->

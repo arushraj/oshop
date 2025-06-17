@@ -1,8 +1,9 @@
-import { map, switchMap } from 'rxjs';
+import { map, Observable, of, switchMap } from 'rxjs';
 import { AppUser } from '../models/app-user';
 import { FirebaseData, FIREBASEDATAPATHS } from '../services/firebase-data';
 import { FirebaseAuthentication } from './../services/firebase-authentication';
 import { Component } from '@angular/core';
+import { User } from 'firebase/auth';
 
 @Component({
   selector: 'bs-navbar',
@@ -14,15 +15,20 @@ export class BsNavbar {
 
   constructor(private firebaseAuth: FirebaseAuthentication,
     private firebaseDS: FirebaseData) {
-    this.firebaseAuth.getUser.pipe(
-      switchMap(user => this.firebaseDS.getData(`${FIREBASEDATAPATHS.USERS}/${user?.uid}` || '')),
-      map(user => user)
-    ).subscribe(user => this.appUser = !!user && user || null);
+    this._appUser = this.firebaseAuth.getUser.pipe(
+      switchMap(user => !!user && this.firebaseDS.getUserData(`${FIREBASEDATAPATHS.USERS}/${user?.uid}` || '') || of(null)),
+      map(user => user || null)
+    );
 
   }
 
-  appUser: AppUser | null = null;
+  private _appUser: Observable<AppUser | null> = of(null);
   isDropdownOpen = false;
+
+  get currentUser(): Observable<AppUser | null> {
+    return this._appUser
+  }
+
   toggleDropdown() {
     this.isDropdownOpen = !this.isDropdownOpen;
   }

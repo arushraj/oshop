@@ -1,6 +1,6 @@
 import { AppUser } from './../models/app-user';
 import { Injectable } from '@angular/core';
-import { Database, ref, set, update, get, onChildChanged } from '@angular/fire/database';
+import { Database, ref, set, update, get } from '@angular/fire/database';
 import { inject } from '@angular/core';
 import { from, map, Observable } from 'rxjs';
 
@@ -13,17 +13,21 @@ export class FirebaseData {
   private db: Database = inject(Database);
 
   // Store data at a specific path in the database
-  storeData(path: string, data: AppUser): void {
+  storeData(path: string, data: any): void {
     const dataRef = ref(this.db, path);
     update(dataRef, data)
       .then(() => {
         console.log('Data saved!');
-        // this.getData(path).subscribe((data) => console.log('Data retrieved:', data));
       })
       .catch(err => console.error('Error:', err));
   }
 
-  getData(pathWithUid: string): Observable<AppUser | null> {
+  getData(path: string) {
+    const dataRef = ref(this.db, path);
+    return get(dataRef);
+  }
+
+  getUserData(pathWithUid: string): Observable<AppUser | null> {
     const dataRef = ref(this.db, pathWithUid);
     return from(get(dataRef)).pipe(
       map(snapshot => snapshot.val() as AppUser | null)
@@ -34,4 +38,5 @@ export class FirebaseData {
 
 export enum FIREBASEDATAPATHS {
   USERS = 'users/',
+  CATEGORIES = 'categories/',
 }

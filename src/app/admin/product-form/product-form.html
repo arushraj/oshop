@@ -1,0 +1,47 @@
+<h2 mat-dialog-title>New Product</h2>
+<form [formGroup]="productForm" (ngSubmit)="onSubmit()">
+  <mat-dialog-content>
+    <div style="display: flex; gap: 24px; align-items: flex-start;">
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
+        <mat-form-field appearance="fill" class="full-width">
+          <mat-label>Product Name</mat-label>
+          <mat-icon matPrefix>label</mat-icon>
+          <input matInput formControlName="name" required>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="full-width">
+          <mat-label>Category</mat-label>
+          <mat-icon matPrefix>category</mat-icon>
+          <mat-select formControlName="category" required>
+            <mat-option *ngFor="let category of categories" [value]="category.id">
+              {{ category.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="full-width">
+          <mat-label>Price</mat-label>
+          <mat-icon matPrefix>attach_money</mat-icon>
+          <!-- <mat-icon matSuffix *ngIf="productForm.get('price')?.invalid">info</mat-icon> -->
+          <input matInput type="number" formControlName="price" required>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="full-width">
+          <mat-label>Image URL</mat-label>
+          <mat-icon matPrefix>image</mat-icon>
+          <input matInput formControlName="imageUrl">
+        </mat-form-field>
+      </div>
+      <div style="width: 180px; min-width: 120px;">
+        <img [src]="productForm.get('imageUrl')?.value || 'https://via.placeholder.com/150'" alt="Product Image"
+          style="width: 100%; border-radius: 4px; border: 1px solid #ccc;" />
+      </div>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-raised-button color="primary" mat-dialog-close="submit" type="submit" [disabled]="productForm.invalid">
+      Save
+    </button>
+    <button mat-button type="button" mat-dialog-close="cancel" (click)="onCancel()">Cancel</button>
+  </mat-dialog-actions>
+</form>
