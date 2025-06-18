@@ -2,8 +2,6 @@ import {
   AppCheckInstances,
   AuthInstances
 } from "./chunk-Y76NSUW4.js";
-import "./chunk-3LKSP6G2.js";
-import "./chunk-KQRM5WX6.js";
 import {
   Component,
   ComponentContainer,
@@ -53,6 +51,8 @@ import {
   ɵgetDefaultInstanceOf,
   ɵzoneWrap
 } from "./chunk-QIBRQKJ6.js";
+import "./chunk-3LKSP6G2.js";
+import "./chunk-KQRM5WX6.js";
 import {
   InjectionToken,
   Injector,
@@ -64,10 +64,10 @@ import {
   ɵɵdefineInjector,
   ɵɵdefineNgModule
 } from "./chunk-OTQLPVHW.js";
+import "./chunk-FQBI3WRC.js";
 import {
   merge
 } from "./chunk-TYLNY5KT.js";
-import "./chunk-FQBI3WRC.js";
 import {
   Observable,
   concatMap,

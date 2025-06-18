@@ -12,8 +12,9 @@ import {
   UserCredential
 } from '@angular/fire/auth';
 // import { setPersistence, browserSessionPersistence } from 'firebase/auth';
-import { from, Observable } from 'rxjs';
-import { FirebaseData, FIREBASEDATAPATHS } from './firebase-data';
+import { Observable } from 'rxjs';
+import { FIREBASEDATAPATHS } from './firebase-datasource';
+import { UserService } from './user-service';
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +22,7 @@ import { FirebaseData, FIREBASEDATAPATHS } from './firebase-data';
 export class FirebaseAuthentication {
   private user$: Observable<User | null>;
 
-  constructor(private firebaseAuth: Auth, private firebaseDS: FirebaseData) {
+  constructor(private firebaseAuth: Auth, private userService: UserService) {
     // this.setSessionStoragePersistence();
     this.user$ = user(this.firebaseAuth);
   }
@@ -52,7 +53,7 @@ export class FirebaseAuthentication {
           lastLogin: new Date().toISOString(),
           provider: 'google'
         }
-        this.firebaseDS.storeData(FIREBASEDATAPATHS.USERS + this.firebaseAuth.currentUser?.uid, user);
+        this.userService.updateData(FIREBASEDATAPATHS.USERS + this.firebaseAuth.currentUser?.uid, user);
       });
   }
 

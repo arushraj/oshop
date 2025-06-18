@@ -11,7 +11,7 @@ import {
   Platform,
   coerceElement,
   coerceNumberProperty
-} from "./chunk-I3EVLTFG.js";
+} from "./chunk-S4T3GDPU.js";
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -1665,6 +1665,11 @@ var ScrollingModule = class _ScrollingModule {
 })();
 
 export {
+  DataSource,
+  isDataSource,
+  _ViewRepeaterOperation,
+  _VIEW_REPEATER_STRATEGY,
+  _RecycleViewRepeaterStrategy,
   VIRTUAL_SCROLL_STRATEGY,
   FixedSizeVirtualScrollStrategy,
   _fixedSizeVirtualScrollStrategyFactory,
@@ -1683,4 +1688,4 @@ export {
   CdkScrollableModule,
   ScrollingModule
 };
-//# sourceMappingURL=chunk-AMDMBE7O.js.map
+//# sourceMappingURL=chunk-GI6GYSWH.js.map

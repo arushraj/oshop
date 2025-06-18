@@ -1,8 +1,11 @@
-<h2 mat-dialog-title>New Product</h2>
+<h2 mat-dialog-title>
+  <mat-icon>inventory</mat-icon>
+  Add New Product Form
+</h2>
 <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
   <mat-dialog-content>
-    <div style="display: flex; gap: 24px; align-items: flex-start;">
-      <div style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
+    <div class="product-form-container">
+      <div class="product-form-fields">
         <mat-form-field appearance="fill" class="full-width">
           <mat-label>Product Name</mat-label>
           <mat-icon matPrefix>label</mat-icon>
@@ -22,8 +25,7 @@
         <mat-form-field appearance="fill" class="full-width">
           <mat-label>Price</mat-label>
           <mat-icon matPrefix>attach_money</mat-icon>
-          <!-- <mat-icon matSuffix *ngIf="productForm.get('price')?.invalid">info</mat-icon> -->
-          <input matInput type="number" formControlName="price" required>
+          <input matInput type="number" formControlName="price" required min="0">
         </mat-form-field>
 
         <mat-form-field appearance="fill" class="full-width">
@@ -31,17 +33,39 @@
           <mat-icon matPrefix>image</mat-icon>
           <input matInput formControlName="imageUrl">
         </mat-form-field>
+        <mat-form-field appearance="fill" class="full-width">
+          <mat-label>Description</mat-label>
+          <mat-icon matPrefix>description</mat-icon>
+          <textarea matInput formControlName="description" rows="3"></textarea>
+        </mat-form-field>
       </div>
-      <div style="width: 180px; min-width: 120px;">
-        <img [src]="productForm.get('imageUrl')?.value || 'https://via.placeholder.com/150'" alt="Product Image"
-          style="width: 100%; border-radius: 4px; border: 1px solid #ccc;" />
+      <div class="product-form-preview">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title-group>
+              <mat-card-title *ngIf="getFormValue('name')">{{ getFormValue('name') | titlecase }}</mat-card-title>
+              <mat-card-subtitle *ngIf="getFormValue('category')">
+                {{ getFormValue('category') | titlecase }}</mat-card-subtitle>
+            </mat-card-title-group>
+          </mat-card-header>
+          <img mat-card-xl-image *ngIf="getFormValue('imageUrl')" [src]="getFormValue('imageUrl')" alt="Product Image">
+          <mat-card-content>
+            <p *ngIf="getFormValue('price')">{{ getFormValue('price') | currency }}</p>
+            <p *ngIf="getFormValue('description')">{{ getFormValue('description') }}</p>
+          </mat-card-content>
+        </mat-card>
       </div>
     </div>
   </mat-dialog-content>
   <mat-dialog-actions align="end">
-    <button mat-raised-button color="primary" mat-dialog-close="submit" type="submit" [disabled]="productForm.invalid">
-      Save
+    <button mat-raised-button color="primary" matTooltip="Save" mat-dialog-close="submit" type="submit"
+      [disabled]="productForm.invalid  || productForm.pristine">
+      <mat-icon>{{ primaryButtonName | lowercase }}</mat-icon>
+      {{ primaryButtonName | uppercase }}
     </button>
-    <button mat-button type="button" mat-dialog-close="cancel" (click)="onCancel()">Cancel</button>
+    <button mat-raised-button type="button" mat-dialog-close="cancel" matTooltip="Cancel " (click)="onCancel()">
+      <mat-icon>cancel</mat-icon>
+      CANCEL
+    </button>
   </mat-dialog-actions>
 </form>

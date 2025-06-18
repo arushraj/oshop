@@ -1,0 +1,18 @@
+<h2 mat-dialog-title style="display: flex; align-items: center; gap: 8px;">
+  <mat-icon color="warn">warning_amber</mat-icon>
+  Confirm Action
+</h2>
+<mat-dialog-content style="display: flex; align-items: center; gap: 12px;">
+  <mat-icon color="warn">help_outline</mat-icon>
+  <span>Are you sure you want to proceed?</span>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-raised-button mat-dialog-close="false">
+    <mat-icon>close</mat-icon>
+    Cancel
+  </button>
+  <button mat-raised-button color="warn" mat-dialog-close="true">
+    <mat-icon>check</mat-icon>
+    Confirm
+  </button>
+</mat-dialog-actions>

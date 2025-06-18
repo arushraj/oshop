@@ -1,9 +1,8 @@
-import { map, Observable, of, switchMap } from 'rxjs';
+import { UserService } from './../services/user-service';
+import { Observable, of, ReplaySubject } from 'rxjs';
 import { AppUser } from '../models/app-user';
-import { FirebaseData, FIREBASEDATAPATHS } from '../services/firebase-data';
 import { FirebaseAuthentication } from './../services/firebase-authentication';
 import { Component } from '@angular/core';
-import { User } from 'firebase/auth';
 
 @Component({
   selector: 'bs-navbar',
@@ -13,24 +12,37 @@ import { User } from 'firebase/auth';
 })
 export class BsNavbar {
 
-  constructor(private firebaseAuth: FirebaseAuthentication,
-    private firebaseDS: FirebaseData) {
-    this._appUser = this.firebaseAuth.getUser.pipe(
-      switchMap(user => !!user && this.firebaseDS.getUserData(`${FIREBASEDATAPATHS.USERS}/${user?.uid}` || '') || of(null)),
-      map(user => user || null)
-    );
+  constructor(
+    private firebaseAuth: FirebaseAuthentication,
+    private userService: UserService) {
+    this.firebaseAuth.getUser.subscribe(user => {
+      if (user) {
+        this.userService.getData(user.uid).then(appUser => {
+          if (appUser && !Array.isArray(appUser)) {
+            this.currentUser = appUser as AppUser;
+          } else {
+            console.error('App user data is not valid:', appUser);
+            this.currentUser = null;
+          }
+        })
+      }
+    });
 
   }
 
-  private _appUser: Observable<AppUser | null> = of(null);
-  isDropdownOpen = false;
+  readonly _appUser = new ReplaySubject<AppUser | null>();
 
   get currentUser(): Observable<AppUser | null> {
-    return this._appUser
+    return this._appUser;
   }
 
-  toggleDropdown() {
-    this.isDropdownOpen = !this.isDropdownOpen;
+  set currentUser(user: AppUser | null) {
+    if (user) {
+      this._appUser.next(user);
+    }
+    else {
+      this._appUser.next(null);
+    }
   }
 
   logout() {

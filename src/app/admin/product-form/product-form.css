@@ -1,0 +1,18 @@
+ .product-form-container {
+   display: flex;
+   gap: 1rem;
+   align-items: flex-start;
+ }
+
+ .product-form-fields {
+   flex: 1;
+   /* display: flex;
+   flex-direction: column;
+   gap: 8px; */
+ }
+
+ .product-form-preview {
+  flex: 1;
+   /* width: 180px;
+   min-width: 120px; */
+ }

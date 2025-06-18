@@ -21,6 +21,7 @@ import { Login } from './login/login';
 import { Home } from './home/home';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ProductForm } from './admin/product-form/product-form';
+import { Confirmdialog } from './common/confirmdialog/confirmdialog';
 
 @NgModule({
   declarations: [
@@ -35,7 +36,8 @@ import { ProductForm } from './admin/product-form/product-form';
     MyOrders,
     AdminProducts,
     AdminOrders,
-    ProductForm
+    ProductForm,
+    Confirmdialog
   ],
   imports: [
     BrowserModule,
