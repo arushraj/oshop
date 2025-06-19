@@ -1,8 +1,12 @@
-import { remove } from '@angular/fire/database';
 import { Injectable } from '@angular/core';
-import { FIREBASEDATAPATHS, FirebaseDatasource } from './firebase-datasource';    // Keep your paths as before
+import {
+  FIREBASEDATAPATHS,
+  CHILDOPTATIONS,
+  ChildChange,
+  FirebaseDatasource
+} from './firebase-datasource';    // Keep your paths as before
 import { Product } from '../models/product';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -11,6 +15,15 @@ export class ProductService extends FirebaseDatasource<Product> {
 
   constructor() {
     super(FIREBASEDATAPATHS.PRODUCTS);
+    this.existingIds = new Set<string>();
+  }
+  public readonly existingIds: Set<string>;
+  readonly _productsDataSource = new BehaviorSubject<Product[]>([]);
+  public get productsDataSource(): Observable<Product[]> {
+    return this._productsDataSource.asObservable();
+  }
+  private set productsDataSource(products: Product[]) {
+    this._productsDataSource.next(products);
   }
 
   commitProduct(product: Product, removeProduct: boolean = false) {
@@ -21,5 +34,42 @@ export class ProductService extends FirebaseDatasource<Product> {
       return this.updateData(`${FIREBASEDATAPATHS.PRODUCTS}${product.id}`, product);
     }
     return this.pushData(FIREBASEDATAPATHS.PRODUCTS, product);
+  }
+
+  handleProductChildChange(change: ChildChange<Product>) {
+    switch (change.type) {
+      case CHILDOPTATIONS.ADD:
+        // Add the new product to your local list
+        this.productsDataSource = [...this._productsDataSource.value, change.value as Product];
+        break;
+      case CHILDOPTATIONS.CHANGE:
+        // Update the product in your local list
+        const index = this._productsDataSource.value.findIndex(p => p.id === change.id);
+        if (index !== -1) {
+          const updated = [...this._productsDataSource.value];
+          updated[index] = { ...updated[index], ...(change.value as Product) };
+          this.productsDataSource = updated;
+        }
+        break;
+      case CHILDOPTATIONS.REMOVE:
+        // Remove the product from your local list
+        this.productsDataSource = this._productsDataSource.value.filter(p => p.id !== change.id);
+        break;
+      default:
+        console.warn('Unknown change type:', change.type);
+    }
+  }
+
+  public async fetchProductList() {
+    return this.getData()
+      .then(products => {
+        if (products) {
+          products.map(({ id }) => {
+            if (id)
+              this.existingIds.add(id)
+          });
+          this.productsDataSource = products;
+        }
+      });
   }
 }

@@ -1,7 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-import { FirebaseAuthentication } from './services/firebase-authentication';
-import { ActivatedRoute, Router } from '@angular/router';
-
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-root',
@@ -9,21 +6,8 @@ import { ActivatedRoute, Router } from '@angular/router';
   standalone: false,
   styleUrl: './app.css'
 })
-export class App implements OnInit {
+export class App {
 
-  constructor(private firebaseAuth: FirebaseAuthentication,
-    private router: Router,
-    private route: ActivatedRoute) {
-  }
-
-  ngOnInit(): void {
-    this.firebaseAuth.getAuthState
-      .subscribe((user) => {
-        if (user) {
-          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-          if (returnUrl)
-            this.router.navigateByUrl(returnUrl);
-        }
-      });
+  constructor() {
   }
 }

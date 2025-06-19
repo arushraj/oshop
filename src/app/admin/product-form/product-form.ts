@@ -61,7 +61,6 @@ export class ProductForm implements OnInit {
       const productData: Product = this.productForm.value;
       if (this.product.id) {
         productData.id = this.product.id; // Ensure the ID is set for updates
-
         // Only update if data has changed
         const hasChanged = Object.keys(productData).some(
           key => productData[key as keyof Product] !== this.product[key as keyof Product]

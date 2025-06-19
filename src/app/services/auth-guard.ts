@@ -9,14 +9,14 @@ import { map } from 'rxjs/operators';
 export class AuthGuard implements CanActivate {
 
   constructor(private firebaseAuth: FirebaseAuthentication,
-    private route: Router) { }
+    private router: Router) { }
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.firebaseAuth.getUser.pipe(
       map(user => {
         if (user) {
           return true
         } else {
-          this.route.navigate(['/login'], { queryParams: { returnUrl: state.url } });
+          this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
           return false;
         }
       })

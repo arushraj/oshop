@@ -1,4 +1,4 @@
-import { FirebaseAuthentication } from './../services/firebase-authentication';
+import { UserService } from '../services/user-service';
 import { Component } from '@angular/core';
 
 @Component({
@@ -9,13 +9,11 @@ import { Component } from '@angular/core';
 })
 export class Login {
 
-  constructor(private firebaseAuth: FirebaseAuthentication) {
+  constructor(private userService: UserService) {
     // Constructor logic can go here
   }
 
   loginWithGoogle() {
-    // Implement Google login logic here
-    console.log('Logging in with Google...');
-    this.firebaseAuth.googleAuth();
+    this.userService.authenticateWithGoogle();
   }
 }

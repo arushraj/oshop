@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ProductForm } from '../product-form/product-form';
 import { ProductService } from '../../services/product-service';
 import { Product } from '../../models/product';
-import { Observable, ReplaySubject } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { Confirmdialog } from '../../common/confirmdialog/confirmdialog';
 
@@ -14,21 +14,28 @@ import { Confirmdialog } from '../../common/confirmdialog/confirmdialog';
   styleUrl: './admin-products.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AdminProducts implements OnInit {
+export class AdminProducts implements OnInit, OnDestroy {
 
-  constructor(private productService: ProductService, private route: ActivatedRoute) { }
+  constructor(
+    private productService: ProductService,
+    private route: ActivatedRoute) {
+    this.dialog = inject(MatDialog);
+  }
 
   ngOnInit(): void {
-    this.productService.getList()
-      .subscribe(products => {
-        this.productsDataSource = products;
-      });
+    if (!this.productService.existingIds.size) {
+      this.productService.fetchProductList()
+        .then(() => this.subscribeChildChanges());
+    } else {
+      this.subscribeChildChanges();
+    }
 
     const productId = this.route.snapshot.paramMap.get('id');
     if (productId) {
       this.productService
-        .getData(productId).then(product => {
-          if (product && !Array.isArray(product)) {
+        .getItem(productId)
+        .then(product => {
+          if (product) {
             this.openDialog(product);
           } else {
             console.error('Product not found');
@@ -39,10 +46,26 @@ export class AdminProducts implements OnInit {
     }
   }
 
-  readonly dialog = inject(MatDialog);
-  readonly _productsDataSource = new ReplaySubject<Product[]>();
-  readonly displayedColumns: string[] = ['name', 'price', 'category', 'actions'];
-  readonly columnsToDisplay: string[] = this.displayedColumns.slice(0, this.displayedColumns.length - 1);
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  private subscriptions = new Subscription();
+  readonly dialog: MatDialog;
+
+  readonly columnsToDisplay: string[] = ['name', 'price', 'category'];
+  readonly displayedColumns: string[] = [...this.columnsToDisplay, 'actions'];
+
+  get dataSource(): Observable<Product[]> {
+    return this.productService.productsDataSource;
+  }
+
+  private subscribeChildChanges() {
+    this.subscriptions.add(
+      this.productService.getChildChanges(this.productService.existingIds)
+        .subscribe(change => this.productService.handleProductChildChange(change))
+    );
+  }
 
   openDialog(product?: Product | null) {
     this.dialog
@@ -61,12 +84,5 @@ export class AdminProducts implements OnInit {
           this.productService.commitProduct(product, true);
         }
       });
-  }
-  get productsDataSource(): Observable<Product[]> {
-    return this._productsDataSource;
-  }
-
-  set productsDataSource(products: Product[]) {
-    this._productsDataSource.next(products);
   }
 }

@@ -13,8 +13,6 @@ import {
 } from '@angular/fire/auth';
 // import { setPersistence, browserSessionPersistence } from 'firebase/auth';
 import { Observable } from 'rxjs';
-import { FIREBASEDATAPATHS } from './firebase-datasource';
-import { UserService } from './user-service';
 
 @Injectable({
   providedIn: 'root'
@@ -22,7 +20,7 @@ import { UserService } from './user-service';
 export class FirebaseAuthentication {
   private user$: Observable<User | null>;
 
-  constructor(private firebaseAuth: Auth, private userService: UserService) {
+  constructor(private firebaseAuth: Auth) {
     // this.setSessionStoragePersistence();
     this.user$ = user(this.firebaseAuth);
   }
@@ -39,25 +37,15 @@ export class FirebaseAuthentication {
     return authState(this.firebaseAuth);
   }
 
-  public googleAuth() {
+  public async googleAuth(): Promise<UserCredential> {
     return signInWithPopup(this.firebaseAuth, new GoogleAuthProvider())
       .catch(error => {
         console.error('Google login failed:', error);
         throw error;
-      })
-      .finally(() => {
-        const user: AppUser = {
-          email: this.firebaseAuth.currentUser?.email || '',
-          displayName: this.firebaseAuth.currentUser?.displayName || '',
-          photoURL: this.firebaseAuth.currentUser?.photoURL || '',
-          lastLogin: new Date().toISOString(),
-          provider: 'google'
-        }
-        this.userService.updateData(FIREBASEDATAPATHS.USERS + this.firebaseAuth.currentUser?.uid, user);
       });
   }
 
-  googleLogout() {
+  public async googleLogout() {
     return signOut(this.firebaseAuth)
       .catch(error => {
         console.error('Google logout failed:', error);
@@ -68,7 +56,7 @@ export class FirebaseAuthentication {
       });
   }
 
-  loginWithEmail(email: string, password: string): Promise<UserCredential> {
+  public async loginWithEmail(email: string, password: string): Promise<UserCredential> {
     return signInWithEmailAndPassword(this.firebaseAuth, email, password)
       .catch(error => {
         console.error('Login failed:', error);
