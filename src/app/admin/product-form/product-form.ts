@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CategoryService } from '../../services/category-service';
-import { Category } from '../../models/category';
-import { ProductService } from '../../services/product-service';
-import { Product } from '../../models/product';
+import { ICategory } from '../../models/category';
+import { ProductService } from '../services/product-service';
+import { IProduct } from '../../models/product';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({
-  selector: 'app-product-form',
+  selector: 'product-form',
   standalone: false,
   templateUrl: './product-form.html',
   styleUrl: './product-form.css',
@@ -20,7 +20,7 @@ export class ProductForm implements OnInit {
     private categoryService: CategoryService,
     private productService: ProductService,
     private router: Router,
-    @Inject(MAT_DIALOG_DATA) public product: Product) {
+    @Inject(MAT_DIALOG_DATA) public product: IProduct) {
     this.productForm = this.fb.group({
       name: ['', Validators.required],
       price: ['', [Validators.required, Validators.min(0)]],
@@ -38,7 +38,7 @@ export class ProductForm implements OnInit {
       });
   }
   productForm: FormGroup;
-  categories: Category[] = [];
+  categories: ICategory[] = [];
 
   ngOnInit() {
     if (this.product) {
@@ -58,12 +58,12 @@ export class ProductForm implements OnInit {
 
   onSubmit() {
     if (this.productForm.valid) {
-      const productData: Product = this.productForm.value;
+      const productData: IProduct = this.productForm.value;
       if (this.product.id) {
         productData.id = this.product.id; // Ensure the ID is set for updates
         // Only update if data has changed
         const hasChanged = Object.keys(productData).some(
-          key => productData[key as keyof Product] !== this.product[key as keyof Product]
+          key => productData[key as keyof IProduct] !== this.product[key as keyof IProduct]
         );
         if (!hasChanged) {
           // No changes, do not call the DB

@@ -40,15 +40,29 @@
         </mat-form-field>
       </div>
       <div class="product-form-preview">
-        <mat-card>
+        <!-- <mat-card appearance="outlined">
           <mat-card-header>
             <mat-card-title-group>
               <mat-card-title *ngIf="getFormValue('name')">{{ getFormValue('name') | titlecase }}</mat-card-title>
               <mat-card-subtitle *ngIf="getFormValue('category')">
                 {{ getFormValue('category') | titlecase }}</mat-card-subtitle>
+              <img mat-card-lg-image *ngIf="getFormValue('imageUrl')" [src]="getFormValue('imageUrl')"
+                alt="Product Image">
             </mat-card-title-group>
           </mat-card-header>
-          <img mat-card-xl-image *ngIf="getFormValue('imageUrl')" [src]="getFormValue('imageUrl')" alt="Product Image">
+          <mat-card-content>
+            <p *ngIf="getFormValue('price')">{{ getFormValue('price') | currency }}</p>
+            <p *ngIf="getFormValue('description')">{{ getFormValue('description') }}</p>
+          </mat-card-content>
+        </mat-card> -->
+        <mat-card appearance="outlined">
+          <mat-card-header>
+            <img mat-card-avatar *ngIf="getFormValue('category')" [src]="getFormValue('imageUrl')" />
+            <mat-card-title *ngIf="getFormValue('name')">{{ getFormValue('name') | titlecase }}</mat-card-title>
+            <mat-card-subtitle *ngIf="getFormValue('category')">
+              {{ getFormValue('category') | titlecase }}</mat-card-subtitle>
+          </mat-card-header>
+          <img mat-card-image *ngIf="getFormValue('imageUrl')" [src]="getFormValue('imageUrl')" alt="Product Image">
           <mat-card-content>
             <p *ngIf="getFormValue('price')">{{ getFormValue('price') | currency }}</p>
             <p *ngIf="getFormValue('description')">{{ getFormValue('description') }}</p>

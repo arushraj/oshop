@@ -8,7 +8,7 @@ import {
   Platform,
   coerceElement,
   coerceNumberProperty
-} from "./chunk-S4T3GDPU.js";
+} from "./chunk-SI5TUYKL.js";
 import {
   APP_ID,
   CSP_NONCE,
@@ -3156,4 +3156,4 @@ export {
   AriaDescriber,
   MatCommonModule
 };
-//# sourceMappingURL=chunk-S3W24JTK.js.map
+//# sourceMappingURL=chunk-6NE6MXPB.js.map

@@ -7,10 +7,7 @@ import { ShoppingCart } from './shopping-cart/shopping-cart';
 import { CheckOut } from './check-out/check-out';
 import { OrderSuccess } from './order-success/order-success';
 import { MyOrders } from './my-orders/my-orders';
-import { AdminProducts } from './admin/admin-products/admin-products';
-import { AdminOrders } from './admin/admin-orders/admin-orders';
 import { AuthGuard } from './services/auth-guard';
-import { AdminAuthGuard } from './services/admin-auth-guard';
 
 const routes: Routes = [
   { path: '', component: Home },
@@ -21,9 +18,7 @@ const routes: Routes = [
   { path: 'order-success', component: OrderSuccess, canActivate: [AuthGuard] },
   { path: 'my-orders', component: MyOrders, canActivate: [AuthGuard] },
 
-  { path: 'admin/products/:id', component: AdminProducts, canActivate: [AuthGuard, AdminAuthGuard] },
-  { path: 'admin/products', component: AdminProducts, canActivate: [AuthGuard, AdminAuthGuard] },
-  { path: 'admin/orders', component: AdminOrders, canActivate: [AuthGuard, AdminAuthGuard] },
+  { path: 'admin', loadChildren: () => import('./admin/admin-module').then(m => m.AdminModule) },
 
   { path: '**', redirectTo: '', pathMatch: 'full' }
 ];

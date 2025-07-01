@@ -1,4 +1,4 @@
-import { NgModule, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, Component } from '@angular/core';
+import { NgModule, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing-module';
@@ -10,8 +10,6 @@ import { BsNavbar } from './bs-navbar/bs-navbar';
 import { provideDatabase, getDatabase } from '@angular/fire/database';
 import { AngularMaterialComponentsModule } from './angular-material-module';
 import { provideHttpClient } from '@angular/common/http';
-import { AdminOrders } from './admin/admin-orders/admin-orders';
-import { AdminProducts } from './admin/admin-products/admin-products';
 import { MyOrders } from './my-orders/my-orders';
 import { OrderSuccess } from './order-success/order-success';
 import { CheckOut } from './check-out/check-out';
@@ -20,7 +18,6 @@ import { Products } from './products/products';
 import { Login } from './login/login';
 import { Home } from './home/home';
 import { ReactiveFormsModule } from '@angular/forms';
-import { ProductForm } from './admin/product-form/product-form';
 import { Confirmdialog } from './common/confirmdialog/confirmdialog';
 
 @NgModule({
@@ -34,9 +31,6 @@ import { Confirmdialog } from './common/confirmdialog/confirmdialog';
     CheckOut,
     OrderSuccess,
     MyOrders,
-    AdminProducts,
-    AdminOrders,
-    ProductForm,
     Confirmdialog
   ],
   imports: [

@@ -1,4 +1,4 @@
-import { AppUser } from './../models/app-user';
+import { IUser } from '../models/user'
 import { inject, Injectable } from '@angular/core';
 import {
   Auth,
@@ -9,9 +9,10 @@ import {
   signOut,
   user,
   User,
-  UserCredential
+  UserCredential,
+  setPersistence,
+  browserSessionPersistence
 } from '@angular/fire/auth';
-// import { setPersistence, browserSessionPersistence } from 'firebase/auth';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -21,13 +22,13 @@ export class FirebaseAuthentication {
   private user$: Observable<User | null>;
 
   constructor(private firebaseAuth: Auth) {
-    // this.setSessionStoragePersistence();
+    this.setSessionStoragePersistence();
     this.user$ = user(this.firebaseAuth);
   }
 
-  // private setSessionStoragePersistence(): void {
-  //   setPersistence(this.firebaseAuth, browserSessionPersistence);
-  // }
+  private setSessionStoragePersistence(): void {
+    setPersistence(this.firebaseAuth, browserSessionPersistence);
+  }
 
   public get getUser(): Observable<User | null> {
     return this.user$;

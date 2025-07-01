@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AppUser } from '../models/app-user';
+import { IUser } from '../models/user';
 import { FIREBASEDATAPATHS, FirebaseDatasource } from './firebase-datasource';
 import { FirebaseAuthentication } from './firebase-authentication';
 import { BehaviorSubject, map, Observable, of, switchMap } from 'rxjs';
@@ -8,7 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 @Injectable({
   providedIn: 'root'
 })
-export class UserService extends FirebaseDatasource<AppUser> {
+export class UserService extends FirebaseDatasource<IUser> {
 
   constructor(
     private firebaseAuth: FirebaseAuthentication,
@@ -17,21 +17,24 @@ export class UserService extends FirebaseDatasource<AppUser> {
     super(FIREBASEDATAPATHS.USERS);
 
     this.firebaseAuth.getUser.pipe(
-      switchMap(user => !!user && this.getItem(user.uid) || of(null)),
+      switchMap(user => {
+        if (user) {
+          this.getChildChanges()
+            .subscribe(({ value }) => this.authenticatedUser = value || null);
+        }
+        return !!user && this.getItem(user.uid) || of(null)
+      }),
       map((appUser) => !!appUser && appUser || null))
       .subscribe(appUser => this.authenticatedUser = appUser);
-
-    this.getChildChanges()
-      .subscribe(({ value }) => this.authenticatedUser = value || null);
   }
 
-  readonly _appUser = new BehaviorSubject<AppUser | null>(null);
+  readonly _appUser = new BehaviorSubject<IUser | null>(null);
 
-  get authenticatedUser(): Observable<AppUser | null> {
+  get authenticatedUser(): Observable<IUser | null> {
     return this._appUser.asObservable();
   }
 
-  set authenticatedUser(user: AppUser | null) {
+  private set authenticatedUser(user: IUser | null) {
     this._appUser.next(user);
   }
 
@@ -40,7 +43,7 @@ export class UserService extends FirebaseDatasource<AppUser> {
     console.log('Logging in with Google...');
     return this.firebaseAuth.googleAuth()
       .finally(() => {
-        const user: AppUser = {
+        const user: IUser = {
           email: this.firebaseAuth.currentUser?.email || '',
           displayName: this.firebaseAuth.currentUser?.displayName || '',
           photoURL: this.firebaseAuth.currentUser?.photoURL || '',
@@ -62,7 +65,9 @@ export class UserService extends FirebaseDatasource<AppUser> {
 
   public async logoutWithGoogle() {
     return this.firebaseAuth.googleLogout()
+      .then(result => console.log(result))
       .finally(() => {
+        this.authenticatedUser = null;
         this._snackBar.open(
           'You have been logged out. See you again soon!',
           'Close',

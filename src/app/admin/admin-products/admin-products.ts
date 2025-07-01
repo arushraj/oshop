@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ProductForm } from '../product-form/product-form';
-import { ProductService } from '../../services/product-service';
-import { Product } from '../../models/product';
+import { ProductService } from '../services/product-service';
+import { IProduct } from '../../models/product';
 import { Observable, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { Confirmdialog } from '../../common/confirmdialog/confirmdialog';
@@ -56,7 +56,7 @@ export class AdminProducts implements OnInit, OnDestroy {
   readonly columnsToDisplay: string[] = ['name', 'price', 'category'];
   readonly displayedColumns: string[] = [...this.columnsToDisplay, 'actions'];
 
-  get dataSource(): Observable<Product[]> {
+  get dataSource(): Observable<IProduct[]> {
     return this.productService.productsDataSource;
   }
 
@@ -67,15 +67,15 @@ export class AdminProducts implements OnInit, OnDestroy {
     );
   }
 
-  openDialog(product?: Product | null) {
+  openDialog(product?: IProduct | null) {
     this.dialog
-      .open(ProductForm, { data: { ...product }, disableClose: true })
+      .open(ProductForm, { data: { ...product }, disableClose: true, width: '80vw', maxWidth:'none' })
       .afterClosed()
       .subscribe(result => {
         console.log(`Dialog result: ${result}`);
       });
   }
-  deleteProduct(product: Product) {
+  deleteProduct(product: IProduct) {
     this.dialog
       .open(Confirmdialog, { disableClose: true })
       .afterClosed()
